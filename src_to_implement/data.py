@@ -4,57 +4,57 @@ from pathlib import Path
 from skimage.io import imread
 from skimage.color import gray2rgb
 import numpy as np
-import torchvision.transforms as tv
-import pandas as pd
+import torchvision as tv
 
 train_mean = [0.59685254, 0.59685254, 0.59685254]
 train_std = [0.16043035, 0.16043035, 0.16043035]
 
 
 class ChallengeDataset(Dataset):
-
-    def __init__(self, data: pd.DataFrame, mode: str): # mode ['val', 'train']
+    # TODO implement the Dataset class according to the description
+    def __init__(self, data, mode):
         self.data = data
+        # self.train = (mode == 'train')
         self.mode = mode
-
-        self.mean = train_mean[0]
-        self.std = train_std[0]
-
-        # Define transformations
-        if self.mode == 'train':
-            self.transform = tv.Compose([
-                tv.ToPILImage(),
-                tv.ToTensor(),
-                tv.Normalize(mean=[self.mean], std=[self.std])
-            ])
-        else:  # Validation transformations
-            self.transform = tv.Compose([
-                tv.ToPILImage(),
-                tv.ToTensor(),
-                tv.Normalize(mean=[self.mean], std=[self.std])
-            ])
+        TF = tv.transforms
+        self.val_transform = TF.Compose([  
+                                    TF.ToPILImage(),
+                                    TF.ToTensor(),
+                                    TF.Normalize(train_mean, train_std),
+                                    # TF.RandomHorizontalFlip(p=0.3),
+                                    # TF.RandomVerticalFlip(p=0.3)
+                                    ])
+        self.train_transform = TF.Compose([  
+                                    TF.ToPILImage(),
+                                    TF.ToTensor(),
+                                    TF.Normalize(train_mean, train_std)
+                                    # TF.RandomHorizontalFlip(p=0.3),
+                                    # TF.RandomVerticalFlip(p=0.3)
+                                    ])
 
     def __len__(self):
         return len(self.data)
 
-    def __getitem__(self, index: int):
-        row = self.data.iloc[index]
-        image_path = row['filename']
-        labels = row[['crack', 'inactive']].values.astype(np.float32)
+    def __getitem__(self, idx):
+        if self.mode == "val":
+            data = self.data.iloc[idx]
+            img = imread(data['filename'], as_gray=True)
+            img = gray2rgb(img)
+            label = np.array([data['crack'], data['inactive']])
+            img = self.val_transform(img)
+            return img, label
+        if self.mode == "train":
+            data = self.data.iloc[idx]
+            img = imread(data['filename'], as_gray=True)
+            img = gray2rgb(img)
+            label = np.array([data['crack'], data['inactive']])
+            img = self.train_transform(img)
+            return img, label
 
-        image = imread(image_path)
-        image = gray2rgb(image)
-
-        if self.transform:
-            image = self.transform(image)
-
-        # Convert label to tensor
-        labels = torch.tensor(labels, dtype=torch.long)
-
-        return image, labels
-
-
-data = pd.read_csv(r'C:\Users\User\OneDrive\Dokumente\Wintersemester_24_25\DeepLearning\exercise4_material\src_to_implement\data.csv')
-train_dataset = ChallengeDataset(data=data, mode='train')
-val_dataset = ChallengeDataset(data=data, mode='val')
-
+    @property
+    def transform(self):
+        return self._transform
+    
+    @transform.setter
+    def transform(self, transform):
+        self._transform = transform
