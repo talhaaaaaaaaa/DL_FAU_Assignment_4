@@ -52,7 +52,7 @@ class TestDataset(unittest.TestCase):
         val_dl = t.utils.data.DataLoader(ChallengeDataset(self.tab, 'val'), batch_size=1)
         for x, y in val_dl:
             x = x[0].cpu().numpy()
-            self.assertEqual(x.shape[0], 3, 'Make sure that your images are converted to RGB')
+            self.assertEqual(x.shape[0], 3, 'Make sure that your images are converted to RGB. On the "__getitem__" function use the respective skimage function (for further information check the Description.pdf file)')
             self.assertEqual(x.shape[1], 300, 'Your samples are not correctly shaped')
             self.assertEqual(x.shape[2], 300, 'Your samples are not correctly shaped')
 
@@ -75,8 +75,8 @@ class TestDataset(unittest.TestCase):
             s2 += np.sum(x ** 2, axis=(1, 2))
 
         for i in range(3):
-            self.assertTrue(-a * 0.09 < s[i] < a * 0.09, 'Your normalization seems wrong')
-            self.assertTrue(a * 0.91 < s2[i] < a * 1.09, 'Your normalization seems wrong')
+            self.assertTrue(-a * 0.09 < s[i] < a * 0.09, 'Your normalization seems wrong. \n Possible reasons: \n - Using wrong mean and std vectors \n - Wrong composition/order of transformation list \n For further information check the Description.pdf file')
+            self.assertTrue(a * 0.91 < s2[i] < a * 1.09, 'Your normalization seems wrong. \n Possible reasons: \n - Using wrong mean and std vectors \n - Wrong composition/order of transformation list \n For further information check the Description.pdf file')
 
 
 class TestModel(unittest.TestCase):
@@ -95,9 +95,9 @@ class TestModel(unittest.TestCase):
 
         self.assertEqual(pred.shape[0], 50)
         self.assertEqual(pred.shape[1], 2)
-        self.assertFalse(np.isnan(pred).any(), 'Your prediction contains NaN values')
-        self.assertFalse(np.isinf(pred).any(), 'Your prediction contains inf values')
-        self.assertTrue(np.all([0 <= pred, pred <= 1]), 'Make sure your predictions are sigmoided')
+        self.assertFalse(np.isnan(pred).any(), 'Your prediction contains NaN values \n Possible reasons: \n - Wrong Loss function \n - Poorly choosen learning rate \n - Faulty input')
+        self.assertFalse(np.isinf(pred).any(), 'Your prediction contains inf values \n Possible reasons: \n - Wrong Loss function \n - Poorly choosen learning rate \n - Faulty input')
+        self.assertTrue(np.all([0 <= pred, pred <= 1]), 'Make sure your predictions are sigmoided i.e the last layer of your ResNet model should be the sigmoid activation function')
 
     def test_prediction_after_save_and_load(self):
         import onnxruntime
@@ -108,9 +108,9 @@ class TestModel(unittest.TestCase):
 
         self.assertEqual(pred.shape[0], 50)
         self.assertEqual(pred.shape[1], 2)
-        self.assertFalse(np.isnan(pred).any(), 'Your prediction contains NaN values')
-        self.assertFalse(np.isinf(pred).any(), 'Your prediction contains inf values')
-        self.assertTrue(np.all([0 <= pred, pred <= 1]), 'Make sure your predictions are sigmoided')
+        self.assertFalse(np.isnan(pred).any(), 'Your prediction contains NaN values \n Possible reasons: \n - Wrong Loss function \n - Poorly choosen learning rate \n - Faulty input')
+        self.assertFalse(np.isinf(pred).any(), 'Your prediction contains inf values \n Possible reasons: \n - Wrong Loss function \n - Poorly choosen learning rate \n - Faulty input')
+        self.assertTrue(np.all([0 <= pred, pred <= 1]), 'Make sure your predictions are sigmoided i.e the last layer of your ResNet model should be sigmoid activation function')
 
 
 if __name__ == '__main__':
